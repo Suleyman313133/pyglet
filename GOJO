@@ -1,0 +1,228 @@
+import random
+import time
+
+# Karakter sınıfı
+class Karakter:
+    def __init__(self, isim, can, saldiri, savunma, seviye=1, deneyim=0, gorunus=""):
+        self.isim = isim
+        self.can = can
+        self.saldiri = saldiri
+        self.savunma = savunma
+        self.seviye = seviye
+        self.deneyim = deneyim
+        self.gorunus = gorunus
+
+    def zarar_al(self, zarar):
+        alinan_zarar = max(zarar - self.savunma, 0)
+        self.can -= alinan_zarar
+        return alinan_zarar
+
+    def hayatta_mi(self):
+        return self.can > 0
+
+    def dusmana_saldir(self, dusman):
+        zarar = random.randint(self.saldiri - 5, self.saldiri + 5)
+        alinan_zarar = dusman.zarar_al(zarar)
+        return alinan_zarar
+
+    def seviye_atla(self):
+        if self.deneyim >= self.seviye * 20:
+            self.seviye += 1
+            self.can += 10
+            self.saldiri += 2
+            self.savunma += 1
+            print(f"{self.isim} seviye atladı! Şu anki seviye: {self.seviye}")
+            self.deneyim = 0
+
+    def deneyim_kazan(self, miktar):
+        self.deneyim += miktar
+        self.seviye_atla()
+
+# Eşyalar sınıfı
+class Esya:
+    def __init__(self, isim, etki_tipi, etki_degeri):
+        self.isim = isim
+        self.etki_tipi = etki_tipi
+        self.etki_degeri = etki_degeri
+
+    def kullan(self, karakter):
+        if self.etki_tipi == "can":
+            karakter.can += self.etki_degeri
+            print(f"{karakter.isim}, {self.isim} kullandı ve {self.etki_degeri} can iyileşti.")
+        elif self.etki_tipi == "saldiri":
+            karakter.saldiri += self.etki_degeri
+            print(f"{karakter.isim}, {self.isim} kullandı ve saldırı gücü {self.etki_degeri} arttı.")
+
+# Düşman sınıfı
+class Dusman(Karakter):
+    def __init__(self, isim, can, saldiri, savunma, deneyim_degeri, gorunus=""):
+        super().__init__(isim, can, saldiri, savunma, gorunus=gorunus)
+        self.deneyim_degeri = deneyim_degeri
+
+    def deneyim_kazan(self):
+        return self.deneyim_degeri
+
+# Yer sınıfı
+class Yer:
+    def __init__(self, isim, aciklama, gorunus=""):
+        self.isim = isim
+        self.aciklama = aciklama
+        self.gorunus = gorunus
+
+# Oyun dünyası
+class OyunDunyasi:
+    def __init__(self):
+        self.karakterler = []
+        self.esyalar = []
+        self.yerler = []
+        self.dusmanlar = [
+            Dusman("Goblin", 50, 10, 3, 5, gorunus="Küçük, yeşil bir yaratık"),
+            Dusman("Troll", 80, 15, 5, 10, gorunus="Büyük, güçlü ve çirkin bir yaratık"),
+            Dusman("Zombi", 40, 8, 2, 3, gorunus="Çürüyen bir ceset"),
+            Dusman("Vampir", 60, 18, 4, 8, gorunus="Karanlık ve korkutucu bir yaratık"),
+            Dusman("Kurtadam", 70, 20, 6, 12, gorunus="Kurt ve insan karışımı bir yaratık"),
+            Dusman("Ejderha", 150, 30, 10, 50, gorunus="Devasa, ateş püskürten bir yaratık"),
+            Dusman("İskelet", 30, 5, 1, 2, gorunus="Kemiklerden oluşan bir yaratık"),
+            Dusman("Canavar", 100, 25, 8, 20, gorunus="Korkunç ve güçlü bir yaratık"),
+            Dusman("Cadı", 50, 12, 3, 7, gorunus="Kötü büyüler yapan bir kadın"),
+            Dusman("Golem", 120, 22, 8, 18, gorunus="Taştan veya topraktan yapılmış bir yaratık"),
+        ]
+        self.oyuncu = Karakter("Kahraman", 100, 20, 5, gorunus="Cesur bir savaşçı")
+
+    def esya_ekle(self, esya):
+        self.esyalar.append(esya)
+
+    def karakter_ekle(self, karakter):
+        self.karakterler.append(karakter)
+
+    def yer_ekle(self, yer):
+        self.yerler.append(yer)
+
+    def dusman_sec(self):
+        return random.choice(self.dusmanlar)
+
+    def durum_goster(self):
+        print(f"Kahraman Canı: {self.oyuncu.can}")
+        print(f"Kahraman Saldırı: {self.oyuncu.saldiri}")
+        print(f"Kahraman Savunma: {self.oyuncu.savunma}")
+        print(f"Seviye: {self.oyuncu.seviye}")
+        print(f"Görünüş: {self.oyuncu.gorunus}")
+
+    def dusmanla_karsilas(self):
+        dusman = self.dusman_sec()
+        print(f"{dusman.isim} ortaya çıktı! {dusman.can} canı var.")
+        print(f"Görünüş: {dusman.gorunus}")
+        while self.oyuncu.hayatta_mi() ve dusman.hayatta_mi():
+            print("\nSıra Sizde!")
+            eylem = input("Saldırmak için [A] tuşlayın veya [E]şya kullanmak için [U] tuşlayın: ").lower()
+
+            if eylem == "a":
+                zarar = self.oyuncu.dusmana_saldir(dusman)
+                print(f"{dusman.isim}'e {zarar} hasar verdiniz.")
+            elif eylem == "u":
+                print("Eşyalarınız:")
+                for i, esya in enumerate(self.esyalar):
+                    print(f"{i + 1}. {esya.isim}")
+                esya_secimi = int(input("Bir eşya seçin: ")) - 1
+                if 0 <= esya_secimi < len(self.esyalar):
+                    self.esyalar[esya_secimi].kullan(self.oyuncu)
+                else:
+                    print("Geçersiz eşya seçimi.")
+                continue
+
+            time.sleep(1)
+
+            if dusman.hayatta_mi():
+                zarar = dusman.dusmana_saldir(self.oyuncu)
+                print(f"{dusman.isim}, size saldırdı ve {zarar} hasar verdi.")
+
+            self.durum_goster()
+
+            if not self.oyuncu.hayatta_mi():
+                print("Maalesef, yenildiniz!")
+                break
+            elif not dusman.hayatta_mi():
+                print(f"{dusman.isim} yenildi!")
+                self.oyuncu.deneyim_kazan(dusman.deneyim_kazan())
+                break
+
+    def oyun_baslat(self):
+        # Oyun başlangıcı
+        print("Oyun Başlıyor!")
+        while True:
+            print("\nNe yapmak istersiniz?")
+            eylem = input("[D]üşmanla karşılaş | [I]nventar | [Y]erleri keşfet | [K]arakterleri görüntüle | [Q]oyunu kapat: ").lower()
+
+            if eylem == "d":
+                self.dusmanla_karsilas()
+                if not self.oyuncu.hayatta_mi():
+                    break
+            elif eylem == "i":
+                print("Envanteriniz:")
+                for esya in self.esyalar:
+                    print(f"- {esya.isim}")
+                secim = int(input("Bir eşya kullanmak için numarasını girin veya [0] ile menüye dönün: ")) - 1
+                if secim == -1:
+                    continue
+                elif 0 <= secim < len(self.esyalar):
+                    self.esyalar[secim].kullan(self.oyuncu)
+                else:
+                    print("Geçersiz seçim.")
+            elif eylem == "y":
+                print("Yerler:")
+                for i, yer in enumerate(self.yerler):
+                    print(f"{i + 1}. {yer.isim} - {yer.aciklama}")
+                secim = int(input("Bir yer seçin veya [0] ile menüye dönün: ")) - 1
+                if secim == -1:
+                    continue
+                elif 0 <= secim < len(self.yerler):
+                    print(f"{self.yerler[secim].isim} - {self.yerler[secim].aciklama}")
+                    print(f"Görünüş: {self.yerler[secim].gorunus}")
+                else:
+                    print("Geçersiz seçim.")
+            elif eylem == "k":
+                print("Karakterler:")
+                for karakter in self.karakterler:
+                    print(f"- {karakter.isim} (Can: {karakter.can}, Saldırı: {karakter.saldiri}, Savunma: {karakter.savunma}, Seviye: {karakter.seviye})")
+                    print(f"Görünüş: {karakter.gorunus}")
+            elif eylem == "q":
+                print("Oyunu oynadığınız için teşekkürler!")
+                break
+            else:
+                print("Geçersiz giriş, lütfen geçerli bir seçenek girin.")
+
+if __name__ == "__main__":
+    oyun = OyunDunyasi()
+
+    # Oyun eşyalarını ekle
+    iyilestirici_iksir = Esya("İyileştirici İksir", "can", 30)
+    saldiri_artirici = Esya("Saldırı Gücü Artırıcı", "saldiri", 5)
+    guclu_iksir = Esya("Güçlü İksir", "can", 50)
+    savunma_kalkanı = Esya("Savunma Kalkanı", "savunma", 5)
+    oyun.esya_ekle(iyilestirici_iksir)
+    oyun.esya_ekle(saldiri_artirici)
+    oyun.esya_ekle(guclu_iksir)
+    oyun.esya_ekle(savunma_kalkanı)
+
+    # Oyun yerlerini ekle
+    kasaba = Yer("Kasaba", "Güvenli bir yerleşim bölgesi.", gorunus="Küçük, sevimli evler ve pazar yerleri")
+    orman = Yer("Orman", "Tehlikeli yaratıkların yaşadığı bir yer.", gorunus="Karanlık ve yoğun ağaçlarla kaplı")
+    magara = Yer("Mağara", "Karanlık ve gizemli bir yer.", gorunus="Derin ve karanlık geçitlerle dolu")
+    kale = Yer("Kale", "Krallığın korunduğu güçlü bir yapı.", gorunus="Yüksek duvarlar ve güçlü muhafızlar")
+    dag = Yer("Dağ", "Yüksek ve sarp bir yer.", gorunus="Kar ve buzla kaplı zirveler")
+    oyun.yer_ekle(kasaba)
+    oyun.yer_ekle(orman)
+    oyun.yer_ekle(magara)
+    oyun.yer_ekle(kale)
+    oyun.yer_ekle(dag)
+
+    # Yeni karakterler ekle
+    savasci = Karakter("Savaşçı", 120, 25, 7, gorunus="Kılıç ve zırh ile donatılmış güçlü bir savaşçı")
+    okcu = Karakter("Okçu", 80, 30, 4, gorunus="Hızlı ve çevik bir nişancı")
+    buyucu = Karakter("Büyücü", 60, 35, 2, gorunus="Güçlü büyüler yapabilen bir karakter")
+    oyun.karakter_ekle(savasci)
+    oyun.karakter_ekle(okcu)
+    oyun.karakter_ekle(buyucu)
+
+    # Oyun başlatma
+    oyun.oyun_baslat()
